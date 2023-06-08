@@ -12,6 +12,17 @@ import time
 import config
 from torchvision.datasets import ImageFolder
 
+intro = ' ______  ______  _______          __                             __ \n'
+intro +='|   __ \|   __ \|    ___| ______ |  |--..---.-..-----..-----..--|  |\n'
+intro +='|      <|   __ <|    ___||______||  _  ||  _  ||__ --||  -__||  _  |\n'
+intro +='|___|__||______/|___|            |_____||___._||_____||_____||_____|\n'
+intro +='                     _______   _______   _______\n'
+intro +='                    |    |  | |   _   | |     __|\n'
+intro +='                    |       | |       | |__     |\n'
+intro +='                    |__|____| |___|___| |_______|\n'
+
+print(intro)
+
 #######################################
 # Hyperparameter
 # - batch_size_NE: batch size for this NAS
@@ -21,15 +32,22 @@ from torchvision.datasets import ImageFolder
 # - dataset_path: dataset path
 # - api_loc: NAS benchmark file path
 #######################################
-print('==> Preparing hyperparameters..')
-batch_size_NE = config.batch_size_NE
+print('==> Preparing parameters..')
+batch_size_NE = config.N
 Num_Networks = config.Num_Networks
-maxtrials = config.maxtrials
-N_GAMMA = config.N_GAMMA
-dataset_path = config.dataset_path
-api_loc = config.api_loc
+maxtrials = config.max_trials
+N_GAMMA = config.M
+dataset = config.dataset
 # GPU
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
+print('Mini-batch size: {}'.format(batch_size_NE))
+print('Number of candidate networks as the design space:{}'.format(Num_Networks))
+print('Number of trials:{}'.format(maxtrials))
+print('Number of candidate networks to detect Gamma for RBF:{}'.format(N_GAMMA))
+print('Compuataion device:{}'.format(device))
+print('Dataset:{}'.format(dataset))
+print()
 
 #######################################
 # Reproducibility
@@ -57,7 +75,7 @@ def normalize(x, axis=None):
 # - networks are defined by pytorch
 #######################################
 s = time.time()
-searchspace = create(api_loc, 'tss', fast_mode=True, verbose=False)
+searchspace = create('./designspace/NATS-Bench-SSS/NATS-sss-v1_0-50262-simple', 'sss', fast_mode=True, verbose=False)
 e = time.time()
 print('DONE')
 print('time:{}'.format(e-s))
@@ -75,7 +93,7 @@ if config.dataset == 'cifar10':
       transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
   ])
   trainset = torchvision.datasets.CIFAR10(
-          root=dataset_path, train=True, download=True, transform=transform_train)
+          root='./dataset/CIFAR10', train=True, download=True, transform=transform_train)
   trainloader = torch.utils.data.DataLoader(
           trainset, batch_size=batch_size_NE, shuffle=True, num_workers=2, pin_memory=True)
 
@@ -88,7 +106,7 @@ elif config.dataset == 'cifar100':
     transforms.ToTensor(),
     transforms.Normalize((0.5070751592371323, 0.48654887331495095, 0.4409178433670343), (0.2673342858792401, 0.2564384629170883, 0.27615047132568404))
   ])
-  cifar100_training = torchvision.datasets.CIFAR100(root=dataset_path, train=True, download=True, transform=transform_train)
+  cifar100_training = torchvision.datasets.CIFAR100(root='./dataset/CIFAR100', train=True, download=True, transform=transform_train)
   trainloader = torch.utils.data.DataLoader(cifar100_training, shuffle=True, num_workers=4, batch_size=batch_size_NE, pin_memory=True)
   
 elif config.dataset == 'ImageNet16-120':
@@ -125,15 +143,15 @@ for r in range(maxtrials):
   # Compute Distance and Kernel Matrix
   ########################
   def counting_forward_hook(module, inp, out):
-    out = out[0]
-    arr = out.view(-1)
-    network.K = torch.concatenate([network.K, arr])
+    with torch.no_grad():
+      arr = out.view(batch_size_NE, -1)
+      network.K = torch.cat((network.K, arr),1)
       
   def counting_forward_hook_FC(module, inp, out):
-      if isinstance(inp, tuple):
-        inp = inp[0]
-      arr = inp.view(-1)
-      network.Q = torch.concatenate([network.Q, arr])
+      with torch.no_grad():
+        if isinstance(inp, tuple):
+            inp = inp[0]
+        network.Q = inp
   
   #######################################
   # Self-detecting Hyperparameter
@@ -142,7 +160,7 @@ for r in range(maxtrials):
   GAMMA_Q_list = []
   for id in range(N_GAMMA):
     uid = batch_space[id]
-    config = searchspace.get_net_config(uid, config.dataset)
+    config = searchspace.get_net_config(uid, dataset)
     network = get_cell_based_tiny_net(config)
     network = network.to(device)
     
@@ -156,25 +174,17 @@ for r in range(maxtrials):
       if NC == net_counter:
         module.register_forward_hook(counting_forward_hook_FC)
         
-    # Check LA
-    x2 = torch.clone(x[0:1,:,:,:])
-    x2 = x2.to(device)
-    network.K = torch.tensor([], device=device)
-    network.Q = torch.tensor([], device=device)
-    network(x2)
-    LA = len(network.K)
-    LAQ = len(network.Q)
+    with torch.no_grad():
+      network.K = torch.empty(0, device=device)
+      network.Q = torch.empty(0, device=device)
+      network(x[0:batch_size_NE,:,:,:].to(device))
+      
+      Output_matrix = network.K
+      Last_matrix = network.Q
     
-    Output_matrix = np.zeros([batch_size_NE, LA])
-    Last_matrix = np.zeros([batch_size_NE, LAQ])
-    for i in range(batch_size_NE):
-      x2 = torch.clone(x[i:i+1,:,:,:])
-      x2 = x2.to(device)
-      network.K = torch.tensor([], device=device)
-      network.Q = torch.tensor([], device=device)
-      network(x2)
-      Output_matrix[i,:] = network.K.cpu().detach().clone().numpy()
-      Last_matrix[i,:] = network.Q.cpu().detach().clone().numpy()
+    with torch.no_grad():
+      Output_matrix = Output_matrix.cpu().numpy()
+      Last_matrix = Last_matrix.cpu().numpy()
       
     for i in range(batch_size_NE-1):
       for j in range(i+1,batch_size_NE):
@@ -208,15 +218,23 @@ for r in range(maxtrials):
           
   GAMMA_K = np.min(np.array(GAMMA_K_list))
   GAMMA_Q = np.min(np.array(GAMMA_Q_list))
+  print('==> Detected Hyperparameter Gamma ..')
   print('gamma_k:',GAMMA_K)
   print('gamma_q:',GAMMA_Q)
   
   #######################################
   # Evaluate Networks in design space
   #######################################
+  best_uid = 0
+  best_accuracy = 0
+  best_score = -1e10
+  count = 1
+  print('==> Evaluate networks in design space ..')
   for uid in batch_space:
     
-    config = searchspace.get_net_config(uid, config.dataset)
+    print('[{}/{}]Evalaute network id: {}'.format(count,Num_Networks,uid))
+    
+    config = searchspace.get_net_config(uid, dataset)
     network = get_cell_based_tiny_net(config)
     
     network = network.to(device)
@@ -232,29 +250,19 @@ for r in range(maxtrials):
         module.register_forward_hook(counting_forward_hook_FC)
     
 
-    # Check LA
-    x2 = torch.clone(x[0:1,:,:,:])
-    x2 = x2.to(device)
-    network.K = torch.tensor([], device=device)
-    network.Q = torch.tensor([], device=device)
-    network(x2)
-    LA = len(network.K)
-    LAQ = len(network.Q)
-    
-    Output_matrix = np.zeros([batch_size_NE, LA])
-    Last_matrix = np.zeros([batch_size_NE, LAQ])
-    for i in range(batch_size_NE):
-      x2 = torch.clone(x[i:i+1,:,:,:])
-      x2 = x2.to(device)
-      network.K = torch.tensor([], device=device)
-      network.Q = torch.tensor([], device=device)
-      network(x2)
-      Output_matrix[i,:] = network.K.cpu().detach().clone().numpy()
-      Last_matrix[i,:] = network.Q.cpu().detach().clone().numpy()
+    with torch.no_grad():
+      network.K = torch.empty(0, device=device)
+      network.Q = torch.empty(0, device=device)
+      network(x[0:batch_size_NE,:,:,:].to(device))
+      
+      Output_matrix = network.K
+      Last_matrix = network.Q
     
     # Normalization
-    Output_matrix = normalize(Output_matrix, axis=0)
-    Last_matrix = normalize(Last_matrix, axis=0)
+    with torch.no_grad():
+      Output_matrix = normalize(Output_matrix.cpu().numpy(), axis=0)
+      Last_matrix = normalize(Last_matrix.cpu().numpy(), axis=0)
+
 
     # RBF kernel
     X_norm = np.sum(Output_matrix ** 2, axis = -1)
@@ -275,19 +283,28 @@ for r in range(maxtrials):
     })
     
     # Compute score
-    _, score = np.linalg.slogdet(np.kron(K_Matrix, Q_Matrix))
+    _, K = np.linalg.slogdet(K_Matrix)
+    _, Q = np.linalg.slogdet(Q_Matrix)
+    score = batch_size_NE*(K+Q)
     
     # Get accuracy of networks in design spaces
-    accuracy, latency, time_cost, current_total_time_cost = searchspace.simulate_train_eval(uid, dataset='cifar10')
+    accuracy, latency, time_cost, current_total_time_cost = searchspace.simulate_train_eval(uid, dataset=dataset, hp='90')
      
     
-    if np.isinf(score_id18):
-      score_id18 = -1e10
+    if np.isinf(score):
+      score = -1e10
       
-      
+    print('\t Score: {}'.format(score))
+    print('\t Accuracy: {}'.format(accuracy))
     score_array[done_network-1] = score
     acc_array[done_network-1] = accuracy
     
+    if score > best_score:
+      best_score = score
+      best_accuracy = accuracy
+      best_uid = uid
+    
+    count += 1
     done_network += 1
     
     if done_network > Num_Networks:
@@ -297,9 +314,12 @@ for r in range(maxtrials):
   tau, p = stats.kendalltau(acc_array,score_array)
   print("======================================")
   print('Trial: ', r)
-  print()
-  print('Pearson Correlation: ',CC[0,1])
-  print('Kendall Correlation: ', tau)
+  print('\tPearson Correlation: ',CC[0,1])
+  print('\tKendall Correlation: ', tau)
+  print('In this design space')
+  print('\tBest network id: {}'.format(best_uid))
+  print('\tThe network accuracy: {}'.format(best_accuracy))
+  print('\tThe network score: {}'.format(best_score))
   print("======================================")
   print()
 

@@ -24,7 +24,7 @@ def return_feature_layer(network, prefix=''):
 class NDS:
     def __init__(self, searchspace):
         self.searchspace = searchspace
-        data = json.load(open(f'./NDS/{searchspace}.json', 'r'))
+        data = json.load(open(f'./designspace/NDS/{searchspace}.json', 'r'))
         try:
             data = data['top'] + data['mid']
         except Exception as e:

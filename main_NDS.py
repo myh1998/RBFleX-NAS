@@ -9,6 +9,18 @@ from NDS import NDS
 import config
 from torchvision.datasets import ImageFolder
 
+
+intro = ' ______  ______  _______          __                             __ \n'
+intro +='|   __ \|   __ \|    ___| ______ |  |--..---.-..-----..-----..--|  |\n'
+intro +='|      <|   __ <|    ___||______||  _  ||  _  ||__ --||  -__||  _  |\n'
+intro +='|___|__||______/|___|            |_____||___._||_____||_____||_____|\n'
+intro +='                     _______   _______   _______\n'
+intro +='                    |    |  | |   _   | |     __|\n'
+intro +='                    |       | |       | |__     |\n'
+intro +='                    |__|____| |___|___| |_______|\n'
+
+print(intro)
+
 #######################################
 # Hyperparameter
 # - batch_size_NE: batch size for this NAS
@@ -16,14 +28,21 @@ from torchvision.datasets import ImageFolder
 # - maxtrials: the number of trials
 # - N_GAMMA: the number of network sampled randomly for self-detecting hyperparameter
 #######################################
-print('==> Preparing hyperparameters..')
-batch_size_NE = config.batch_size_NE
+print('==> Preparing parameters..')
+batch_size_NE = config.N
 Num_Networks = config.Num_Networks
-maxtrials = config.maxtrials
-N_GAMMA = config.N_GAMMA
+maxtrials = config.max_trials
+N_GAMMA = config.M
 NDS_SPACE = config.NDS_SPACE
-dataset_path = config.dataset_path
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
+print('Mini-batch size: {}'.format(batch_size_NE))
+print('Number of candidate networks as the design space:{}'.format(Num_Networks))
+print('Number of trials:{}'.format(maxtrials))
+print('Number of candidate networks to detect Gamma for RBF:{}'.format(N_GAMMA))
+print('Design Space Name:{}'.format(NDS_SPACE))
+print('Compuataion device:{}'.format(device))
+print()
 
 #######################################
 # Reproducibility
@@ -58,21 +77,13 @@ if config.dataset == 'cifar10':
       transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
   ])
   trainset = torchvision.datasets.CIFAR10(
-          root=dataset_path, train=True, download=True, transform=transform_train)
+          root='./dataset/CIFAR10', train=True, download=True, transform=transform_train)
   trainloader = torch.utils.data.DataLoader(
           trainset, batch_size=batch_size_NE, shuffle=True, num_workers=2, pin_memory=True)
 
 elif config.dataset == 'cifar100':
-  transform_train = transforms.Compose([
-    #transforms.ToPILImage(),
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(15),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5070751592371323, 0.48654887331495095, 0.4409178433670343), (0.2673342858792401, 0.2564384629170883, 0.27615047132568404))
-  ])
-  cifar100_training = torchvision.datasets.CIFAR100(root=dataset_path, train=True, download=True, transform=transform_train)
-  trainloader = torch.utils.data.DataLoader(cifar100_training, shuffle=True, num_workers=4, batch_size=batch_size_NE, pin_memory=True)
+  print('Change dataset...')
+  exit()
   
 elif config.dataset == 'ImageNet16-120':
   train_root = config.train_root
@@ -95,9 +106,9 @@ x, target = next(data_iterator)
 
 
 
-print('Loading...NDS '+NDS_SPACE)
+print('Loading...NDS({})'.format(NDS_SPACE))
 searchspace = NDS(NDS_SPACE)
-print('Num of networks: ', len(searchspace))
+print('Num of networks: {} in {}'.format(len(searchspace),NDS_SPACE))
 print('DONE')
 
 # Model
@@ -121,12 +132,15 @@ for r in range(maxtrials):
   # Compute Distance and Kernel Matrix
   ########################
   def counting_forward_hook(module, inp, out):
-      arr = out.view(-1)
-      network.K = torch.concatenate([network.K, arr])
+    with torch.no_grad():
+      arr = out.view(batch_size_NE, -1)
+      network.K = torch.cat((network.K, arr),1)
       
   def counting_forward_hook_FC(module, inp, out):
-      arr = inp[0].view(-1)
-      network.Q = torch.concatenate([network.Q, arr])
+      with torch.no_grad():
+        if isinstance(inp, tuple):
+            inp = inp[0]
+        network.Q = inp
   
   #######################################
   # Self-detecting Hyperparameter
@@ -148,25 +162,17 @@ for r in range(maxtrials):
       if NC == net_counter:
         module.register_forward_hook(counting_forward_hook_FC)
         
-    # Check LA
-    x2 = torch.clone(x[0:1,:,:,:])
-    x2 = x2.to(device)
-    network.K = torch.tensor([], device=device)
-    network.Q = torch.tensor([], device=device)
-    network(x2)
-    LA = len(network.K)
-    LAQ = len(network.Q)
+    with torch.no_grad():
+      network.K = torch.empty(0, device=device)
+      network.Q = torch.empty(0, device=device)
+      network(x[0:batch_size_NE,:,:,:].to(device))
+      
+      Output_matrix = network.K
+      Last_matrix = network.Q
     
-    Output_matrix = np.zeros([batch_size_NE, LA])
-    Last_matrix = np.zeros([batch_size_NE, LAQ])
-    for i in range(batch_size_NE):
-      x2 = torch.clone(x[i:i+1,:,:,:])
-      x2 = x2.to(device)
-      network.K = torch.tensor([], device=device)
-      network.Q = torch.tensor([], device=device)
-      network(x2)
-      Output_matrix[i,:] = network.K.cpu().detach().clone().numpy()
-      Last_matrix[i,:] = network.Q.cpu().detach().clone().numpy()
+    with torch.no_grad():
+      Output_matrix = Output_matrix.cpu().numpy()
+      Last_matrix = Last_matrix.cpu().numpy()
       
     for i in range(batch_size_NE-1):
       for j in range(i+1,batch_size_NE):
@@ -200,17 +206,21 @@ for r in range(maxtrials):
           
   GAMMA_K = np.min(np.array(GAMMA_K_list))
   GAMMA_Q = np.min(np.array(GAMMA_Q_list))
+  print('==> Detected Hyperparameter Gamma ..')
   print('gamma_k:',GAMMA_K)
   print('gamma_q:',GAMMA_Q)
   
   #######################################
   # Evaluate Networks in design space
   #######################################
+  print('==> Evaluate networks in design space ..')
+  count = 1
   for uid in batch_space:
     network = searchspace.get_network(uid)
     
     network = network.to(device)
-
+    
+    print('[{}/{}]Evalaute network id: {}'.format(count,Num_Networks,uid))
         
     net_counter = list(network.named_modules())
     net_counter = len(net_counter)
@@ -222,31 +232,18 @@ for r in range(maxtrials):
       if NC == net_counter:
         module.register_forward_hook(counting_forward_hook_FC)
     
-    #ls
-    #print('NFC:',NFC)
-    # Check LA
-    x2 = torch.clone(x[0:1,:,:,:])
-    x2 = x2.to(device)
-    network.K = torch.tensor([], device=device)
-    network.Q = torch.tensor([], device=device)
-    network(x2)
-    LA = len(network.K)
-    LAQ = len(network.Q)
-    
-    Output_matrix = np.zeros([batch_size_NE, LA])
-    Last_matrix = np.zeros([batch_size_NE, LAQ])
-    for i in range(batch_size_NE):
-      x2 = torch.clone(x[i:i+1,:,:,:])
-      x2 = x2.to(device)
-      network.K = torch.tensor([], device=device)
-      network.Q = torch.tensor([], device=device)
-      network(x2)
-      Output_matrix[i,:] = network.K.cpu().detach().clone().numpy()
-      Last_matrix[i,:] = network.Q.cpu().detach().clone().numpy()
+    with torch.no_grad():
+      network.K = torch.empty(0, device=device)
+      network.Q = torch.empty(0, device=device)
+      network(x[0:batch_size_NE,:,:,:].to(device))
       
+      Output_matrix = network.K
+      Last_matrix = network.Q
+    
     # Normalization
-    Output_matrix = normalize(Output_matrix, axis=0)
-    Last_matrix = normalize(Last_matrix, axis=0)
+    with torch.no_grad():
+      Output_matrix = normalize(Output_matrix.cpu().numpy(), axis=0)
+      Last_matrix = normalize(Last_matrix.cpu().numpy(), axis=0)
     
     # RBF kernel
     X_norm = np.sum(Output_matrix ** 2, axis = -1)
@@ -265,18 +262,24 @@ for r in range(maxtrials):
     })
     
     # Compute score
-    _, score = np.linalg.slogdet(np.kron(K_Matrix, Q_Matrix)) # idea18
+    _, K = np.linalg.slogdet(K_Matrix)
+    _, Q = np.linalg.slogdet(Q_Matrix)
+    score = batch_size_NE*(K+Q)
     
     # Get accuracy of networks in design spaces
     accuracy = searchspace.get_final_accuracy(uid)
     
-    if np.isinf(score_id18):
-      score_id18 = -1e10
+    if np.isinf(score):
+      score = -1e10
       
     score_array[done_network-1] = score
     acc_array[done_network-1] = accuracy
     
+    count += 1
     done_network += 1
+    
+    if done_network == Num_Networks+1:
+      break
     
   CC = np.corrcoef(acc_array, score_array)
   tau, p = stats.kendalltau(acc_array,score_array)

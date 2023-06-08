@@ -6,18 +6,14 @@
 # - N_GAMMA: the number of network sampled randomly for self-detecting hyperparameter
 # - dataset_path: dataset path
 #######################################
-batch_size_NE = 16
+N = 16
 Num_Networks = 1000
-maxtrials = 10
-N_GAMMA = 10
-dataset_path = './'
+max_trials = 1
+M = 10
 dataset = 'cifar10' # select dataset from ['cifar10', 'cifar100', 'ImageNet16-120']
-# if you use imageNet, please set train_root
-train_root = './'
 
-# NAS-Bench-201 and NATS-Bench-SSS
-api_loc = './NATS-sss-v1_0-50262-simple' #NATS-Bench-SSS
-#api_loc = './NATS-tss-v1_0-3ffb9-simple' #NAS-Bench-201
+# if you use imageNet, please set train_root
+train_root = './dataset/ImageNet/ILSVRC2012_img_train'
 
 # Network Design Spaces (NDS)
-NDS_SPACE = 'DARTS' # select one design space from ['Amoeba', 'DARTS', 'ENAS', 'PNAS', 'ResNet', 'NASNet']
+NDS_SPACE = 'DARTS' # select one design space from ['Amoeba', 'DARTS', 'ENAS', 'PNAS', 'ResNet', 'NASNet','Amoeba_in','DARTS_in','ENAS_in', 'PNAS_in', 'NASNet_in']
