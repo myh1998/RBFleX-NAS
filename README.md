@@ -12,8 +12,6 @@
 ![](https://img.shields.io/github/last-commit/tomomasayamasaki/RBF-kernel-based-NAS)
 ![](https://img.shields.io/github/languages/count/tomomasayamasaki/RBF-kernel-based-NAS)
 
-## 🟨 Contents
-
 
 ## 🟨 What is RBF-kernel-based NAS
 <table>
