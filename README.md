@@ -53,7 +53,7 @@ cifar100_training = torchvision.datasets.CIFAR100(root='YOUR DATASET PATH', trai
 ```
 
 ### ImageNet
-You may download training set of ImageNet from [here](https://www.image-net.org). Before downloading, you should create a account on the website. After downloading it, please store the dataset on `./dataset/ImageNet`. If you already have ImageNet dataset on your environment, you may set your dataset path on root on config.py as follow.
+You may download training set of ImageNet from [here](https://www.image-net.org). Before downloading, you should create a account on the website. After downloading it, please store the dataset on `./dataset/ImageNet`. If you already have ImageNet dataset on your environment, you may set your dataset path on `config.py` as follow.
 ```python
 train_root = 'YOUR DATASET PATH/ILSVRC2012_img_train'
 ```
