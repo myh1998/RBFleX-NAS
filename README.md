@@ -64,10 +64,11 @@ train_root = 'YOUR DATASET PATH/ILSVRC2012_img_train'
 ```
 
 ## 🟨 How to Run
-1. Download NAS Benchmarks and put them on `./designspace/NAS-Bench-201/`, `./designspace/NATS-Bench-SSS/`, and `./designsoace/NDS/`, respectively.
+#### 1. Download NAS Benchmarks and put them on `./designspace/NAS-Bench-201/`, `./designspace/NATS-Bench-SSS/`, and `./designsoace/NDS/`, respectively.
 
 
-2. Set parameters on `config.py`, where `N` is mini-batch size of images, `Num_Network` is the number of networks from a design space in one trial, `max_trials` is the number of trials, `M` is the number of networks to detect hyperparameter gamma for RBF kernel, and `dataset` is the dataset image to evaluate networks. Noted that set a NDS space on `NDS_SPACE` if you want to run the NDS benchmark. For example, put 'DARTS' if you explore NDS(DARTS) benchmark. Design space with `in` such as `Amoeba_in, DARTS_in, ENAS_in, PNAS_in, NASNet_in` indicates a desige space for ImageNet.
+#### 2. Set parameters on `config.py`
+where `N` is mini-batch size of images, `Num_Network` is the number of networks from a design space in one trial, `max_trials` is the number of trials, `M` is the number of networks to detect hyperparameter gamma for RBF kernel, and `dataset` is the dataset image to evaluate networks. Noted that set a NDS space on `NDS_SPACE` if you want to run the NDS benchmark. For example, put 'DARTS' if you explore NDS(DARTS) benchmark. Design space with `in` such as `Amoeba_in, DARTS_in, ENAS_in, PNAS_in, NASNet_in` indicates a desige space for ImageNet.
 ```python
 N = 16
 Num_Networks = 1000
@@ -77,7 +78,7 @@ dataset = 'cifar10' # select dataset from ['cifar10', 'cifar100', 'ImageNet16-12
 NDS_SPACE = 'DARTS' # select one design space from ['Amoeba', 'DARTS', 'ENAS', 'PNAS', 'ResNet', 'NASNet','Amoeba_in','DARTS_in','ENAS_in', 'PNAS_in', 'NASNet_in']
 ```
 
-3. Run our program
+#### 3. Run our program
 If you want to run it with NAS-Bench-201,
 ```python
 python main_NAS201.py
