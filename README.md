@@ -64,7 +64,8 @@ train_root = 'YOUR DATASET PATH/ILSVRC2012_img_train'
 ```
 
 ## 🟨 How to Run
-#### 1. Download NAS Benchmarks and put them on `./designspace/NAS-Bench-201/`, `./designspace/NATS-Bench-SSS/`, and `./designsoace/NDS/`, respectively.
+#### 1. Download NAS Benchmarks
+put them on `./designspace/NAS-Bench-201/`, `./designspace/NATS-Bench-SSS/`, and `./designsoace/NDS/`, respectively.
 
 
 #### 2. Set parameters on `config.py`
