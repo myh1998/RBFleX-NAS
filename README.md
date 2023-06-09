@@ -34,6 +34,9 @@ For NAS benchmark
 ## 🟨 Download NAS Benchmark
 Our program works for NAS-Bench-201(NATS-Bench-TSS), NATS-Bench-SSS, and Network Design Space. If you want to apply our NAS algorithm, edit our program to meet other NAS benchmarks.
 ### NATS-Bench
+To download the latest version, please visit the github page of [NATS-Bench: Benchmarking NAS Algorithms for Architecture Topology and Size](https://github.com/D-X-Y/NATS-Bench). You can download the benchmark tar file of "NATS-tss-v1_0-3ffb9-simple.tar" and "NATS-sss-v1_0-50262-simple.tar" from [Google drive](https://drive.google.com/drive/folders/1zjB6wMANiKwB2A1yil2hQ8H_qyeSe2yt). After downloading these benchamark tar files, please store "NATS-tss-v1_0-3ffb9-simple.tar" on ./designspace/NAS-Bench-201/ and "NATS-sss-v1_0-50262-simple.tar" on ./designspace/NATS-Bench-SSS/, respectively. and 
+
+
 
 ### Network Design Space (NDS)
 
