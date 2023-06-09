@@ -39,6 +39,20 @@ To download the latest version, please visit the github page of [NATS-Bench: Ben
 ### Network Design Space (NDS)
 To download NDS benchmark json files, please visit the github page of [On Network Design Spaces for Visual Recognition](https://github.com/facebookresearch/nds). You can download the benchmark json files from [this link](https://dl.fbaipublicfiles.com/nds/data.zip). After downloading these json files, please store all of json files on `./designsoace/NDS/`
 
+#### Noted
+Please store each benchmark on each folder such as `./designspace/NAS-Bench-201/`, `./designspace/NATS-Bench-SSS/`, and `./designsoace/NDS/`.
+
+## 🟨 Download image dataset
+Our program works with three major datasets: CIFAR-10, CIFAR-100, and ImageNet.
+### CIFAR-10 and CIFAR-100
+These datasets are automatically download on `./dataset/CIFAR10` or `./dataset/CIFAR100` respectively by pytorch after running our program. If you already have CIFAR-10 and CIFAR-100 dataset on your environment, you may set your dataset path on root on our program as follow.
+```python
+trainset = torchvision.datasets.CIFAR10(root='./dataset/CIFAR10', train=True, download=True, transform=transform_train)
+
+cifar100_training = torchvision.datasets.CIFAR100(root='./dataset/CIFAR100', train=True, download=True, transform=transform_train)
+```
+
+
 ## 🟨 How to Run
 
 
