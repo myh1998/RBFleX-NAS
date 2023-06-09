@@ -45,13 +45,18 @@ Please store each benchmark on each folder such as `./designspace/NAS-Bench-201/
 ## 🟨 Download image dataset
 Our program works with three major datasets: CIFAR-10, CIFAR-100, and ImageNet.
 ### CIFAR-10 and CIFAR-100
-These datasets are automatically download on `./dataset/CIFAR10` or `./dataset/CIFAR100` respectively by pytorch after running our program. If you already have CIFAR-10 and CIFAR-100 dataset on your environment, you may set your dataset path on root on our program as follow.
+These datasets are automatically download on `./dataset/CIFAR10` or `./dataset/CIFAR100` respectively by pytorch after running our program. If you already have CIFAR-10 and CIFAR-100 dataset on your environment, you may set your dataset path on root on each main program as follow.
 ```python
-trainset = torchvision.datasets.CIFAR10(root='./dataset/CIFAR10', train=True, download=True, transform=transform_train)
+trainset = torchvision.datasets.CIFAR10(root='YOUR DATASET PATH', train=True, download=True, transform=transform_train)
 
-cifar100_training = torchvision.datasets.CIFAR100(root='./dataset/CIFAR100', train=True, download=True, transform=transform_train)
+cifar100_training = torchvision.datasets.CIFAR100(root='YOUR DATASET PATH', train=True, download=True, transform=transform_train)
 ```
 
+### ImageNet
+You may download training set of ImageNet from [here](https://www.image-net.org). Before downloading, you should create a account on the website. After downloading it, please store the dataset on `./dataset/ImageNet`. If you already have ImageNet dataset on your environment, you may set your dataset path on root on config.py as follow.
+```python
+train_root = 'YOUR DATASET PATH/ILSVRC2012_img_train'
+```
 
 ## 🟨 How to Run
 
