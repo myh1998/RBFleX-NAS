@@ -1,6 +1,6 @@
 
 
-# Training-free Network Architecture Search by Radial Basis Function Kernel with Hyperparameter Detection
+# RBFleX-NAS: Training-free Network Architecture Search by Radial Basis Function Kernel with Hyperparameter Detection
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
