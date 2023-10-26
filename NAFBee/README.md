@@ -14,7 +14,7 @@ from models import *
 
 ## 1. Load NAFBee.json
 ```python
-file_path = "NAFBee.json"
+file_path = "NAFBee_VGG19.json" #or "NAFBee_BERT.json"
 with open(file_path, "r") as json_file:
     nafbee = json.load(json_file)
 ```
