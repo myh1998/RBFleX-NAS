@@ -58,11 +58,11 @@ python NAFBee_VGG19.py #VGG19
 python NAFBee_BERT.py #BERT
 ```
 
-## Citing RBFleX-NAS
+# Citing RBFleX-NAS
 If you use NAFBee, please cite the following paper:
 ```
 XXXX
 ```
 
-## Licence
+# Licence
 [MIT Licence](https://en.wikipedia.org/wiki/MIT_License)
