@@ -45,7 +45,7 @@ To download NDS benchmark json files, please visit the github page of [On Networ
 #### Noted
 Please store each benchmark on each folder such as `./designspace/NAS-Bench-201/`, `./designspace/NATS-Bench-SSS/`, and `./designsoace/NDS/`.
 
-### Neural Network Activation Function Benchmark
+### Neural Network Activation Function Benchmark (NAFBee)
 We build the Neural Network Activation Function Benchmark (NAFBee) based on VGG-19 over CIFAR-10 and BERT over SST-2 dataset. The detail of the benchmark is [here](https://github.com/tomomasayamasaki/RBFleX-NAS/tree/main/NAFBee)
 
 ## 🟨 Download image dataset
