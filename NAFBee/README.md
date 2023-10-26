@@ -12,8 +12,14 @@ This is a benchmark for networks with a variety of activation functions. NAFBee 
 # How to use
 ## 0. Import packages
 ```python
+# VGG19
 import json
 from models import *
+```
+```python
+# BERT
+import json
+from BERT_model import BertModel
 ```
 
 ## 1. Load NAFBee.json
