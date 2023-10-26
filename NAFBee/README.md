@@ -5,6 +5,10 @@ This is a benchmark for networks with a variety of activation functions. NAFBee 
 - python 3.x
 - PyTorch
 
+# Datasets for this neural network benchmark
+- CIFAR-10 for VGG19
+- SST-2 for BERT
+
 # How to use
 ## 0. Import packages
 ```python
