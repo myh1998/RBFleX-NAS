@@ -100,3 +100,6 @@ If you use RBFleX, please cite the following paper:
 ```
 XXXX
 ```
+
+## 🟨 Licence
+[MIT Licence](https://en.wikipedia.org/wiki/MIT_License)
