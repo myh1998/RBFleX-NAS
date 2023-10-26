@@ -42,5 +42,8 @@ if "VGG" in info_network:
 # Demo
 You can see a program to get the model. You can add any program using the model on Pytorch such as training or scoring.
 ```python
-python NAFBee_VGG19.py
+python NAFBee_VGG19.py #VGG19
+```
+```python
+python NAFBee_BERT.py #BERT
 ```
