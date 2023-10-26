@@ -92,3 +92,6 @@ python main_NDS.py
 ```
 Noted that define `NDS_SPACE` on `config.py` before running our program with NDS.
 
+
+## 🟨 Neural Network Activation Function Benchmark
+We build the Neural Network Activation Function Benchmark (NAFBee) based on VGG-19 over CIFAR-10 and BERT over SST-2 dataset. The detail of the benchmark is [here]()
