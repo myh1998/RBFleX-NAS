@@ -95,4 +95,8 @@ python main_NDS.py
 Noted that define `NDS_SPACE` on `config.py` before running our program with NDS.
 
 
-## 🟨 
+## 🟨 Citing RBFleX-NAS
+If you use RBFleX, please cite the following paper:
+```
+XXXX
+```
